@@ -8,23 +8,32 @@
     /* Add some basic styling for the UI elements */
     body {
       font-family: Arial, sans-serif;
-      margin: 0; /* Remove default margin to prevent horizontal scroll on small screens */
-      padding: 0; /* Remove default padding */
+      margin: 0;
+      padding: 0;
+      background-color: #f7f7f7;
     }
     .container {
       display: flex;
-      flex-direction: column; /* Stack the containers on mobile */
+      flex-direction: column;
+      margin: 20px;
       padding: 20px;
       border: 1px solid #ccc;
       border-radius: 5px;
       box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+      background-color: #fff;
     }
     .description-container {
-      text-align: left; /* Align the description to the left */
-      margin-bottom: 20px; /* Add spacing between the containers */
+      padding-right: 10px;
+      text-align: left;
     }
     .calculator-container {
-      text-align: center; /* Center-align the calculator contents */
+      padding-left: 10px;
+      text-align: center;
+    }
+    .expense-container {
+      padding-left: 10px;
+      text-align: center;
+      display: none; /* Initially hide the expense calculator */
     }
     label {
       display: block;
@@ -56,26 +65,60 @@
       font-weight: bold;
     }
     .calculate-button {
-      padding: 12px 20px; /* Adjusted padding for a bigger button */
+      padding: 12px 20px;
       background-color: #007BFF;
       color: #fff;
       border: none;
       border-radius: 5px;
       cursor: pointer;
-      margin: 10px auto; /* Center the button horizontally */
-      display: block; /* Make the button a block element for centering */
+      margin: 10px auto;
+      display: block;
     }
     .calculate-button:hover {
       background-color: #0056b3;
     }
-
-    /* Media query for screens smaller than 768px (typical mobile screens) */
-    @media (max-width: 768px) {
+    .expense-button {
+      padding: 12px 20px;
+      background-color: #007BFF;
+      color: #fff;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+      margin: 10px auto;
+      display: block;
+    }
+    .expense-button:hover {
+      background-color: #0056b3;
+    }
+    .reset-button {
+      padding: 12px 20px;
+      background-color: #dc3545;
+      color: #fff;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+      margin: 10px auto;
+      display: block;
+    }
+    .reset-button:hover {
+      background-color: #bd2130;
+    }
+    /* Responsive Styles */
+    @media screen and (max-width: 600px) {
       .container {
-        padding: 10px; /* Reduce container padding for smaller screens */
+        margin: 10px;
       }
-      .calculator-container {
-        margin-top: 20px; /* Add spacing between the description and calculator on small screens */
+      .description-container, .calculator-container, .expense-container {
+        padding: 10px;
+      }
+      .buttons {
+        grid-template-columns: repeat(3, 1fr);
+        gap: 5px;
+      }
+      .calculate-button, .expense-button, .reset-button {
+        padding: 12px 20px;
+        margin: 10px auto;
+        display: block;
       }
     }
   </style>
@@ -106,17 +149,33 @@
         <button class="calculator-button" onclick="appendNumber(9)">9</button>
         <button class="calculator-button" onclick="appendNumber(0)">0</button>
         <button class="calculator-button" onclick="appendDecimalPoint()">.</button>
-        <button class="calculator-button" onclick="removeLastCharacter()">&#9003;</button> <!-- Backspace button -->
+        <button class="calculator-button" onclick="removeLastCharacter()">&#9003;</button>
       </div>
       <button class="calculate-button" onclick="calculateIncome()">Calculate</button>
       <div id="results">
         <!-- Results will be displayed here -->
+      </div>
+      <button class="expense-button" onclick="showExpenseCalculator('Needs')">Add Expenses for Needs</button>
+      <button class="expense-button" onclick="showExpenseCalculator('Wants')">Add Expenses for Wants</button>
+      <button class="reset-button" onclick="resetCalculator()">Reset</button>
+    </div>
+    <div class="expense-container">
+      <h3 id="expenseTitle">Expenses Calculator for Needs</h3>
+      <label for="expenseName">Expense Name:</label>
+      <input type="text" id="expenseName" placeholder="Expense name">
+      <label for="expenseAmount">Expense Amount:</label>
+      <input type="number" id="expenseAmount" placeholder="0.00">
+      <button class="calculate-button" onclick="addExpense()">Add Expense</button>
+      <div id="expenseResults">
+        <!-- Expense details will be displayed here -->
       </div>
     </div>
   </div>
 
   <script>
     let currentInput = '';
+    let expensesNeeds = [];
+    let expensesWants = [];
 
     // Function to append a number to the input field
     function appendNumber(number) {
@@ -176,6 +235,76 @@
         <p><strong>Want:</strong> RM ${want.toFixed(2)}</p>
         <p><strong>Saving:</strong> RM ${saving.toFixed(2)}</p>
       `;
+    }
+
+    // Function to show the expense calculator
+    function showExpenseCalculator(expenseType) {
+      document.querySelector(".expense-container").style.display = "block";
+
+      // Update the title based on the expense type
+      document.getElementById("expenseTitle").textContent = `Expenses Calculator for ${expenseType}`;
+    }
+
+    // Function to add an expense
+    function addExpense() {
+      const expenseName = document.getElementById("expenseName").value;
+      const expenseAmount = parseFloat(document.getElementById("expenseAmount").value);
+
+      if (!expenseName || isNaN(expenseAmount) || expenseAmount <= 0) {
+        alert("Please enter a valid expense name and amount.");
+        return;
+      }
+
+      // Determine which expenses array to use based on the expense type
+      let expensesArray;
+      const expenseType = document.getElementById("expenseTitle").textContent.split(' ')[3];
+      if (expenseType === 'Needs') {
+        expensesArray = expensesNeeds;
+      } else if (expenseType === 'Wants') {
+        expensesArray = expensesWants;
+      }
+
+      expensesArray.push({ name: expenseName, amount: expenseAmount });
+
+      // Display the added expense details
+      const expenseResultsDiv = document.getElementById("expenseResults");
+      let expenseDetailsHTML = `
+        <h3>Expenses for ${expenseType}</h3>
+        <p><strong>Total Expenses:</strong> RM ${expensesArray.reduce((total, exp) => total + exp.amount, 0).toFixed(2)}</p>
+      `;
+      
+      // List all the recorded expenses
+      if (expensesArray.length > 0) {
+        expenseDetailsHTML += "<p><strong>Expense Details:</strong></p>";
+        for (const expense of expensesArray) {
+          expenseDetailsHTML += `<p>${expense.name}: RM ${expense.amount.toFixed(2)}</p>`;
+        }
+      }
+
+      // Calculate the remaining budget for the respective category
+      const salary = parseFloat(currentInput);
+      const kwspPercentage = 0.11;
+      const netIncome = salary - (salary * kwspPercentage);
+      const remainingBudget = (expenseType === 'Needs' ? netIncome * 0.50 : netIncome * 0.30) - expensesArray.reduce((total, exp) => total + exp.amount, 0);
+
+      // Display the remaining budget
+      expenseDetailsHTML += `<p><strong>Remaining Budget for ${expenseType}:</strong> RM ${remainingBudget.toFixed(2)}</p>`;
+      expenseResultsDiv.innerHTML = expenseDetailsHTML;
+
+      // Clear the input fields
+      document.getElementById("expenseName").value = "";
+      document.getElementById("expenseAmount").value = "";
+    }
+
+    // Function to reset the calculator
+    function resetCalculator() {
+      currentInput = '';
+      expensesNeeds = [];
+      expensesWants = [];
+      updateInputField();
+      document.getElementById("results").innerHTML = '';
+      document.getElementById("expenseResults").innerHTML = '';
+      document.querySelector(".expense-container").style.display = "none";
     }
   </script>
 </body>
